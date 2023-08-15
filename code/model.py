@@ -64,23 +64,21 @@ def conv3x3(in_planes, out_planes):
 # ############## G networks ################################################
 # Upsale the spatial size by a factor of 2
 def upBlock(in_planes, out_planes):
-    block = nn.Sequential(
+    return nn.Sequential(
         nn.Upsample(scale_factor=2, mode='nearest'),
         conv3x3(in_planes, out_planes * 2),
         nn.BatchNorm2d(out_planes * 2),
-        GLU()
+        GLU(),
     )
-    return block
 
 
 # Keep the spatial size
 def Block3x3_relu(in_planes, out_planes):
-    block = nn.Sequential(
+    return nn.Sequential(
         conv3x3(in_planes, out_planes * 2),
         nn.BatchNorm2d(out_planes * 2),
-        GLU()
+        GLU(),
     )
-    return block
 
 
 class ResBlock(nn.Module):
@@ -181,17 +179,12 @@ class NEXT_STAGE_G(nn.Module):
     def __init__(self, ngf, num_residual=cfg.GAN.R_NUM):
         super(NEXT_STAGE_G, self).__init__()
         self.gf_dim = ngf
-        if cfg.GAN.B_CONDITION:
-            self.ef_dim = cfg.GAN.EMBEDDING_DIM
-        else:
-            self.ef_dim = cfg.GAN.Z_DIM
+        self.ef_dim = cfg.GAN.EMBEDDING_DIM if cfg.GAN.B_CONDITION else cfg.GAN.Z_DIM
         self.num_residual = num_residual
         self.define_module()
 
     def _make_layer(self, block, channel_num):
-        layers = []
-        for i in range(self.num_residual):
-            layers.append(block(channel_num))
+        layers = [block(channel_num) for _ in range(self.num_residual)]
         return nn.Sequential(*layers)
 
     def define_module(self):
@@ -227,8 +220,7 @@ class GET_IMAGE_G(nn.Module):
         )
 
     def forward(self, h_code):
-        out_img = self.img(h_code)
-        return out_img
+        return self.img(h_code)
 
 
 class G_NET(nn.Module):
@@ -285,27 +277,25 @@ class G_NET(nn.Module):
 
 # ############## D networks ################################################
 def Block3x3_leakRelu(in_planes, out_planes):
-    block = nn.Sequential(
+    return nn.Sequential(
         conv3x3(in_planes, out_planes),
         nn.BatchNorm2d(out_planes),
-        nn.LeakyReLU(0.2, inplace=True)
+        nn.LeakyReLU(0.2, inplace=True),
     )
-    return block
 
 
 # Downsale the spatial size by a factor of 2
 def downBlock(in_planes, out_planes):
-    block = nn.Sequential(
+    return nn.Sequential(
         nn.Conv2d(in_planes, out_planes, 4, 2, 1, bias=False),
         nn.BatchNorm2d(out_planes),
-        nn.LeakyReLU(0.2, inplace=True)
+        nn.LeakyReLU(0.2, inplace=True),
     )
-    return block
 
 
 # Downsale the spatial size by a factor of 16
 def encode_image_by_16times(ndf):
-    encode_img = nn.Sequential(
+    return nn.Sequential(
         # --> state size. ndf x in_size/2 x in_size/2
         nn.Conv2d(3, ndf, 4, 2, 1, bias=False),
         nn.LeakyReLU(0.2, inplace=True),
@@ -320,9 +310,8 @@ def encode_image_by_16times(ndf):
         # --> state size 8ndf x in_size/16 x in_size/16
         nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
         nn.BatchNorm2d(ndf * 8),
-        nn.LeakyReLU(0.2, inplace=True)
+        nn.LeakyReLU(0.2, inplace=True),
     )
-    return encode_img
 
 
 # For 64 x 64 images

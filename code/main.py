@@ -65,8 +65,7 @@ def parse_args():
     parser.add_argument('--gpu', dest='gpu_id', type=str, default='-1')
     parser.add_argument('--data_dir', dest='data_dir', type=str, default='')
     parser.add_argument('--manualSeed', type=int, help='manual seed')
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -95,8 +94,7 @@ if __name__ == "__main__":
 
     now = datetime.datetime.now(dateutil.tz.tzlocal())
     timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
-    output_dir = '../output/%s_%s_%s' % \
-        (cfg.DATASET_NAME, cfg.CONFIG_NAME, timestamp)
+    output_dir = f'../output/{cfg.DATASET_NAME}_{cfg.CONFIG_NAME}_{timestamp}'
 
     split_dir, bshuffle = 'train', True
     if not cfg.TRAIN.FLAG:
@@ -112,9 +110,11 @@ if __name__ == "__main__":
         transforms.RandomHorizontalFlip()])
     if cfg.DATA_DIR.find('lsun') != -1:
         from datasets import LSUNClass
-        dataset = LSUNClass('%s/%s_%s_lmdb' %
-                            (cfg.DATA_DIR, cfg.DATASET_NAME, split_dir),
-                            base_size=cfg.TREE.BASE_SIZE, transform=image_transform)
+        dataset = LSUNClass(
+            f'{cfg.DATA_DIR}/{cfg.DATASET_NAME}_{split_dir}_lmdb',
+            base_size=cfg.TREE.BASE_SIZE,
+            transform=image_transform,
+        )
     elif cfg.DATA_DIR.find('imagenet') != -1:
         from datasets import ImageFolder
         dataset = ImageFolder(cfg.DATA_DIR, split_dir='train',

@@ -88,7 +88,7 @@ class ImageFolder(data.Dataset):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
         self.imsize = []
-        for i in range(cfg.TREE.BRANCH_NUM):
+        for _ in range(cfg.TREE.BRANCH_NUM):
             self.imsize.append(base_size)
             base_size = base_size * 2
         print('num_classes', self.num_classes)
@@ -97,8 +97,8 @@ class ImageFolder(data.Dataset):
         classes = []
 
         for d in os.listdir(dir):
-            if os.path.isdir:
-                if custom_classes is None or d in custom_classes:
+            if custom_classes is None or d in custom_classes:
+                if os.path.isdir:
                     classes.append(os.path.join(dir, d))
         print('Valid classes: ', len(classes), classes)
 
@@ -120,11 +120,9 @@ class ImageFolder(data.Dataset):
 
     def __getitem__(self, index):
         path, target = self.imgs[index]
-        imgs_list = get_imgs(path, self.imsize,
-                             transform=self.transform,
-                             normalize=self.norm)
-
-        return imgs_list
+        return get_imgs(
+            path, self.imsize, transform=self.transform, normalize=self.norm
+        )
 
     def __len__(self):
         return len(self.imgs)
@@ -150,7 +148,7 @@ class LSUNClass(data.Dataset):
             pickle.dump(self.keys, open(cache_file, "wb"))
 
         self.imsize = []
-        for i in range(cfg.TREE.BRANCH_NUM):
+        for _ in range(cfg.TREE.BRANCH_NUM):
             self.imsize.append(base_size)
             base_size = base_size * 2
 
@@ -168,10 +166,9 @@ class LSUNClass(data.Dataset):
         buf = six.BytesIO()
         buf.write(imgbuf)
         buf.seek(0)
-        imgs = get_imgs(buf, self.imsize,
-                        transform=self.transform,
-                        normalize=self.norm)
-        return imgs
+        return get_imgs(
+            buf, self.imsize, transform=self.transform, normalize=self.norm
+        )
 
     def __len__(self):
         return self.length
@@ -190,16 +187,13 @@ class TextDataset(data.Dataset):
         self.target_transform = target_transform
 
         self.imsize = []
-        for i in range(cfg.TREE.BRANCH_NUM):
+        for _ in range(cfg.TREE.BRANCH_NUM):
             self.imsize.append(base_size)
             base_size = base_size * 2
 
         self.data = []
         self.data_dir = data_dir
-        if data_dir.find('birds') != -1:
-            self.bbox = self.load_bbox()
-        else:
-            self.bbox = None
+        self.bbox = self.load_bbox() if data_dir.find('birds') != -1 else None
         split_dir = os.path.join(data_dir, split)
 
         self.filenames = self.load_filenames(split_dir)
@@ -247,7 +241,7 @@ class TextDataset(data.Dataset):
 
         caption_dict = {}
         for key in self.filenames:
-            caption_name = '%s/text/%s.txt' % (self.data_dir, key)
+            caption_name = f'{self.data_dir}/text/{key}.txt'
             captions = load_captions(caption_name)
             caption_dict[key] = captions
         return caption_dict
@@ -286,13 +280,13 @@ class TextDataset(data.Dataset):
         key = self.filenames[index]
         if self.bbox is not None:
             bbox = self.bbox[key]
-            data_dir = '%s/CUB_200_2011' % self.data_dir
+            data_dir = f'{self.data_dir}/CUB_200_2011'
         else:
             bbox = None
             data_dir = self.data_dir
         # captions = self.captions[key]
         embeddings = self.embeddings[index, :, :]
-        img_name = '%s/images/%s.jpg' % (data_dir, key)
+        img_name = f'{data_dir}/images/{key}.jpg'
         imgs = get_imgs(img_name, self.imsize,
                         bbox, self.transform, normalize=self.norm)
 
@@ -300,12 +294,8 @@ class TextDataset(data.Dataset):
         if(self.class_id[index] == self.class_id[wrong_ix]):
             wrong_ix = random.randint(0, len(self.filenames) - 1)
         wrong_key = self.filenames[wrong_ix]
-        if self.bbox is not None:
-            wrong_bbox = self.bbox[wrong_key]
-        else:
-            wrong_bbox = None
-        wrong_img_name = '%s/images/%s.jpg' % \
-            (data_dir, wrong_key)
+        wrong_bbox = self.bbox[wrong_key] if self.bbox is not None else None
+        wrong_img_name = f'{data_dir}/images/{wrong_key}.jpg'
         wrong_imgs = get_imgs(wrong_img_name, self.imsize,
                               wrong_bbox, self.transform, normalize=self.norm)
 
@@ -320,13 +310,13 @@ class TextDataset(data.Dataset):
         key = self.filenames[index]
         if self.bbox is not None:
             bbox = self.bbox[key]
-            data_dir = '%s/CUB_200_2011' % self.data_dir
+            data_dir = f'{self.data_dir}/CUB_200_2011'
         else:
             bbox = None
             data_dir = self.data_dir
         # captions = self.captions[key]
         embeddings = self.embeddings[index, :, :]
-        img_name = '%s/images/%s.jpg' % (data_dir, key)
+        img_name = f'{data_dir}/images/{key}.jpg'
         imgs = get_imgs(img_name, self.imsize,
                         bbox, self.transform, normalize=self.norm)
 

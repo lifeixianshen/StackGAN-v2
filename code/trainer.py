@@ -49,8 +49,7 @@ def compute_mean_covariance(img):
 def KL_loss(mu, logvar):
     # -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     KLD_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar)
-    KLD = torch.mean(KLD_element).mul_(-0.5)
-    return KLD
+    return torch.mean(KLD_element).mul_(-0.5)
 
 
 def weights_init(m):
@@ -72,8 +71,7 @@ def load_params(model, new_param):
 
 
 def copy_G_params(model):
-    flatten = deepcopy(list(p.data for p in model.parameters()))
-    return flatten
+    return deepcopy([p.data for p in model.parameters()])
 
 
 def compute_inception_score(predictions, num_splits=1):
@@ -195,10 +193,8 @@ def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
 
     # The range of real_img (i.e., self.imgs_tcpu[i][0:num])
     # is changed to [0, 1] by function vutils.save_image
-    real_img = imgs_tcpu[-1][0:num]
-    vutils.save_image(
-        real_img, '%s/real_samples.png' % (image_dir),
-        normalize=True)
+    real_img = imgs_tcpu[-1][:num]
+    vutils.save_image(real_img, f'{image_dir}/real_samples.png', normalize=True)
     real_img_set = vutils.make_grid(real_img).numpy()
     real_img_set = np.transpose(real_img_set, (1, 2, 0))
     real_img_set = real_img_set * 255
@@ -207,7 +203,7 @@ def save_img_results(imgs_tcpu, fake_imgs, num_imgs,
     summary_writer.add_summary(sup_real_img, count)
 
     for i in range(num_imgs):
-        fake_img = fake_imgs[i][0:num]
+        fake_img = fake_imgs[i][:num]
         # The range of fake_img.data (i.e., self.fake_imgs[i][0:num])
         # is still [-1. 1]...
         vutils.save_image(
@@ -478,7 +474,7 @@ class GANTrainer(object):
             print(netG)
             # state_dict = torch.load(cfg.TRAIN.NET_G)
             state_dict = \
-                torch.load(cfg.TRAIN.NET_G,
+                    torch.load(cfg.TRAIN.NET_G,
                            map_location=lambda storage, loc: storage)
             netG.load_state_dict(state_dict)
             print('Load ', cfg.TRAIN.NET_G)
@@ -490,10 +486,7 @@ class GANTrainer(object):
             iteration = int(s_tmp[istart:iend])
             s_tmp = s_tmp[:s_tmp.rfind('/')]
             save_dir = '%s/iteration%d/%s' % (s_tmp, iteration, split_dir)
-            if cfg.TEST.B_EXAMPLE:
-                folder = '%s/super' % (save_dir)
-            else:
-                folder = '%s/single' % (save_dir)
+            folder = f'{save_dir}/super' if cfg.TEST.B_EXAMPLE else f'{save_dir}/single'
             print('Make a new folder: ', folder)
             mkdir_p(folder)
 
@@ -507,7 +500,7 @@ class GANTrainer(object):
             netG.eval()
             num_batches = int(cfg.TEST.SAMPLE_NUM / self.batch_size)
             cnt = 0
-            for step in xrange(num_batches):
+            for _ in xrange(num_batches):
                 noise.data.normal_(0, 1)
                 fake_imgs, _, _ = netG(noise)
                 if cfg.TEST.B_EXAMPLE:
@@ -786,8 +779,7 @@ class condGANTrainer(object):
         batch_size = images_list[0].size(0)
         num_sentences = len(images_list)
         for i in range(batch_size):
-            s_tmp = '%s/super/%s/%s' %\
-                (save_dir, split_dir, filenames[i])
+            s_tmp = f'{save_dir}/super/{split_dir}/{filenames[i]}'
             folder = s_tmp[:s_tmp.rfind('/')]
             if not os.path.isdir(folder):
                 print('Make a new folder: ', folder)
@@ -808,8 +800,7 @@ class condGANTrainer(object):
     def save_singleimages(self, images, filenames,
                           save_dir, split_dir, sentenceID, imsize):
         for i in range(images.size(0)):
-            s_tmp = '%s/single_samples/%s/%s' %\
-                (save_dir, split_dir, filenames[i])
+            s_tmp = f'{save_dir}/single_samples/{split_dir}/{filenames[i]}'
             folder = s_tmp[:s_tmp.rfind('/')]
             if not os.path.isdir(folder):
                 print('Make a new folder: ', folder)
